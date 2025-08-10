@@ -1,0 +1,18 @@
+# https://taskfile.dev
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: 3
+
+tasks:
+  bench:
+    desc: run all benchmarks
+    cmd: "go test -bench . ./..."
+  example:
+    desc: build the example site
+    cmd: "go run ./cmd/gig/ -v -s ./example/ build"
+  test:
+    desc: run all tests
+    cmd: "go test ./..."
+  build:
+    desc: build binary with goreleaser
+    cmd: "goreleaser build --snapshot --clean --single-target"
