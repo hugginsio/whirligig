@@ -9,10 +9,11 @@ type Resource struct {
 	Excerpt string
 	Url     string
 	File
-	// TODO: front matter data
 }
 
 func (r *Resource) Write(sourceRoot string, destinationRoot string, content []byte) error {
+	// TODO: revisit Url prop and this method
+
 	destinationFile, err := r.prepareDestinationFile(destinationRoot)
 	if err != nil {
 		return err

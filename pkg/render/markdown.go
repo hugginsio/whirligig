@@ -16,7 +16,6 @@ func NewMarkdownEngine() *MarkdownEngine {
 }
 
 func (m *MarkdownEngine) Render(content []byte) ([]byte, error) {
-	// TODO: front matter
 	// TODO: goldmark config
 
 	var out bytes.Buffer

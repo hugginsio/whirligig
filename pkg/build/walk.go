@@ -20,6 +20,7 @@ func (b *Builder) walkSourceDirectory(site *whirligig.Site) error {
 			return err
 		}
 
+		// TODO: should Data files be required to have an underscore?
 		if strings.HasPrefix(info.Name(), "_") || strings.HasPrefix(info.Name(), ".") {
 			// NOTE: sentinel value, skip the entire directory if bearing exclusion prefix
 			if info.IsDir() {

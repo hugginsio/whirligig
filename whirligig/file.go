@@ -12,13 +12,13 @@ import (
 
 // File represents all files in the source directory.
 type File struct {
-	Name     string    // The name of the File, e.g. `styles.css`.
-	Basename string    // The basename of the File, e.g. `styles`.
-	Extname  string    // The extension of the File, e.g. `.css`.
-	Created  time.Time // When the File was created.
-	Modified time.Time // When the File was modified.
-	Path     string    // The path to the raw File, relative to the source directory.
-	// TODO: support data files (same name as File but with yaml extension) since these cannot have front matter.
+	Name     string         // The name of the File, e.g. `styles.css`.
+	Basename string         // The basename of the File, e.g. `styles`.
+	Extname  string         // The extension of the File, e.g. `.css`.
+	Created  time.Time      // When the File was created.
+	Modified time.Time      // When the File was modified.
+	Path     string         // The path to the raw File, relative to the source directory.
+	Data     map[string]any // Data extracted from companion YAML files or frontmatter.
 }
 
 func (f *File) prepareDestinationFile(destinationRoot string) (*os.File, error) {

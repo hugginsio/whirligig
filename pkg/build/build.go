@@ -70,6 +70,10 @@ func (b *Builder) Prepare() error {
 		return fmt.Errorf("failed to walk source directory: %w", err)
 	}
 
+	if err := b.extractData(b.site); err != nil {
+		return fmt.Errorf("failed to extract data: %w", err)
+	}
+
 	return nil
 }
 
@@ -86,6 +90,7 @@ func (b *Builder) Build() error {
 
 	for _, resource := range b.site.Resources {
 		var engine render.Engine
+
 		switch path.Ext(resource.Name) {
 		case ".md":
 			engine = render.NewMarkdownEngine()
