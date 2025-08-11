@@ -45,7 +45,7 @@ func (b *Builder) extractData(site *whirligig.Site) error {
 }
 
 func (b *Builder) loadCompanionData(file *whirligig.File) error {
-	yamlPath := filepath.Join(b.sourcePath, file.Path, file.Basename+".yaml")
+	yamlPath := filepath.Join(b.sourcePath, file.Path, "_"+file.Basename+".yaml")
 
 	if _, err := os.Stat(yamlPath); os.IsNotExist(err) {
 		// Try .yml extension as well
