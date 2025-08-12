@@ -12,10 +12,13 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hugginsio/whirligig/whirligig"
 	"sigs.k8s.io/yaml"
 )
+
+// TODO: consider moving to separate `pkg/data` with support for different data files such as JSON, TOML, CSV, etc
 
 func (b *Builder) extractData(site *whirligig.Site) error {
 	for _, resource := range site.Resources {
@@ -29,7 +32,10 @@ func (b *Builder) extractData(site *whirligig.Site) error {
 			}
 		}
 
-		// TODO: common Data overrides
+		if err := b.commonPropertyOverrides(&resource.File); err != nil {
+			return err
+		}
+
 		// TODO: Resource Data overrides
 	}
 
@@ -38,18 +44,21 @@ func (b *Builder) extractData(site *whirligig.Site) error {
 			return fmt.Errorf("failed to extract data for file %s: %w", file.Name, err)
 		}
 
-		// TODO: common Data overrides
+		if err := b.commonPropertyOverrides(file); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
+// Load the companion data for a File, e.g. `_styles.yaml`.
 func (b *Builder) loadCompanionData(file *whirligig.File) error {
-	yamlPath := filepath.Join(b.sourcePath, file.Path, "_"+file.Basename+".yaml")
+	yamlPath := filepath.Join(b.whirligig.SourcePath, file.Path, "_"+file.Basename+".yaml")
 
 	if _, err := os.Stat(yamlPath); os.IsNotExist(err) {
 		// Try .yml extension as well
-		yamlPath = filepath.Join(b.sourcePath, file.Path, file.Basename+".yml")
+		yamlPath = filepath.Join(b.whirligig.SourcePath, file.Path, "_"+file.Basename+".yml")
 		if _, err := os.Stat(yamlPath); os.IsNotExist(err) {
 			return nil
 		}
@@ -73,13 +82,14 @@ func (b *Builder) loadCompanionData(file *whirligig.File) error {
 	return nil
 }
 
+// Load the frontmatter from a Markdown document.
 func (b *Builder) loadFrontMatter(resource *whirligig.Resource) error {
-	content, err := resource.Content(b.sourcePath)
+	content, err := resource.Content(b.whirligig.SourcePath)
 	if err != nil {
 		return fmt.Errorf("failed to read resource content: %w", err)
 	}
 
-	frontMatter, _, err := parseFrontMatter(content)
+	frontmatter, err := ParseFrontmatter(content)
 	if err != nil {
 		return fmt.Errorf("failed to parse front matter: %w", err)
 	}
@@ -88,25 +98,25 @@ func (b *Builder) loadFrontMatter(resource *whirligig.Resource) error {
 		resource.Data = make(map[string]any)
 	}
 
-	if frontMatter == nil {
+	if frontmatter == nil {
 		return nil
 	}
 
-	maps.Copy(resource.Data, frontMatter)
+	maps.Copy(resource.Data, frontmatter)
 
 	// TODO: move to separate method later
 
-	if title, ok := frontMatter["title"].(string); ok {
+	if title, ok := frontmatter["title"].(string); ok {
 		resource.Title = title
 		delete(resource.Data, "title")
 	}
 
-	if excerpt, ok := frontMatter["excerpt"].(string); ok {
+	if excerpt, ok := frontmatter["excerpt"].(string); ok {
 		resource.Excerpt = excerpt
 		delete(resource.Data, "excerpt")
 	}
 
-	if url, ok := frontMatter["url"].(string); ok {
+	if url, ok := frontmatter["url"].(string); ok {
 		resource.Url = url
 		delete(resource.Data, "url")
 	}
@@ -114,13 +124,13 @@ func (b *Builder) loadFrontMatter(resource *whirligig.Resource) error {
 	return nil
 }
 
-// parseFrontMatter splits Markdown frontmatter from its content.
-func parseFrontMatter(content []byte) (map[string]any, []byte, error) {
+// Extract frontmatter from the content of a Markdown document.
+func ParseFrontmatter(content []byte) (map[string]any, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(content))
 
 	// Bail out if content does not start with front matter delimiter
 	if !scanner.Scan() || strings.TrimSpace(scanner.Text()) != "---" {
-		return nil, content, nil
+		return nil, nil
 	}
 
 	var frontMatterLines []string
@@ -140,12 +150,12 @@ func parseFrontMatter(content []byte) (map[string]any, []byte, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("error reading content: %w", err)
+		return nil, fmt.Errorf("error reading content: %w", err)
 	}
 
 	// If we didn't find closing ---, treat as no front matter
 	if contentStart == 0 {
-		return nil, content, nil
+		return nil, nil
 	}
 
 	frontMatterYAML := strings.Join(frontMatterLines, "\n")
@@ -153,19 +163,41 @@ func parseFrontMatter(content []byte) (map[string]any, []byte, error) {
 
 	if len(frontMatterYAML) > 0 {
 		if err := yaml.Unmarshal([]byte(frontMatterYAML), &frontMatter); err != nil {
-			return nil, nil, fmt.Errorf("invalid front matter YAML: %w", err)
+			return nil, fmt.Errorf("invalid front matter YAML: %w", err)
 		}
 	} else {
 		frontMatter = make(map[string]any)
 	}
 
-	// TODO: need to see if this is even necessary with goldmark renderer
-	// Extract content after front matter
-	lines := strings.Split(string(content), "\n")
-	if contentStart < len(lines) {
-		remainingContent := strings.Join(lines[contentStart:], "\n")
-		return frontMatter, []byte(remainingContent), nil
+	return frontMatter, nil
+}
+
+func (b *Builder) commonPropertyOverrides(file *whirligig.File) error {
+	if created, ok := file.Data["created"].(string); ok {
+		layouts := []string{
+			time.RFC3339,           // "2006-01-02T15:04:05Z07:00"
+			"2006-01-02T15:04:05Z", // UTC variant
+			"2006-01-02 15:04:05",  // "2023-12-01 15:30:00"
+			"2006-01-02",           // "2023-12-01"
+			"01/02/2006",           // "12/01/2023"
+		}
+
+		var parsedTime time.Time
+		var err error
+
+		for _, layout := range layouts {
+			if parsedTime, err = time.Parse(layout, created); err == nil {
+				file.Created = parsedTime
+				break
+			}
+		}
+
+		if err != nil {
+			return fmt.Errorf("Warning: could not parse created timestamp '%s' with any known format: %v\n", created, err)
+		}
+
+		delete(file.Data, "created")
 	}
 
-	return frontMatter, []byte{}, nil
+	return nil
 }
