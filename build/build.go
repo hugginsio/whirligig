@@ -11,8 +11,9 @@ import (
 	"path"
 	"time"
 
+	"github.com/hugginsio/whirligig/data"
 	"github.com/hugginsio/whirligig/internal/version"
-	"github.com/hugginsio/whirligig/pkg/render"
+	"github.com/hugginsio/whirligig/render"
 	"github.com/hugginsio/whirligig/whirligig"
 )
 
@@ -20,7 +21,6 @@ type Builder struct {
 	configuration   *whirligig.Configuration
 	destinationPath string
 	site            *whirligig.Site
-	sourcePath      string
 	whirligig       *whirligig.Whirligig
 }
 
@@ -29,8 +29,8 @@ func New(sourcePath string, configuration whirligig.Configuration) *Builder {
 	version := version.GetVersionInfo()
 	builder := &Builder{
 		configuration: &configuration,
-		sourcePath:    sourcePath,
 		whirligig: &whirligig.Whirligig{
+			SourcePath:  sourcePath,
 			Version:     version.GitVersion,
 			VersionInfo: &version,
 		},
@@ -46,7 +46,7 @@ func (b *Builder) GetSite() *whirligig.Site {
 	return b.site
 }
 
-// GetSite returns the Site metadata. Returns nil if Prepare has not been called.
+// GetWhirligig returns the Whirligig struct. Returns nil if Prepare has not been called.
 func (b *Builder) GetWhirligig() *whirligig.Whirligig {
 	return b.whirligig
 }
@@ -70,6 +70,10 @@ func (b *Builder) Prepare() error {
 		return fmt.Errorf("failed to walk source directory: %w", err)
 	}
 
+	if err := data.EnrichFiles(b.site, b.whirligig.SourcePath); err != nil {
+		return fmt.Errorf("failed to extract data: %w", err)
+	}
+
 	return nil
 }
 
@@ -86,6 +90,7 @@ func (b *Builder) Build() error {
 
 	for _, resource := range b.site.Resources {
 		var engine render.Engine
+
 		switch path.Ext(resource.Name) {
 		case ".md":
 			engine = render.NewMarkdownEngine()
@@ -95,7 +100,7 @@ func (b *Builder) Build() error {
 			engine = nil
 		}
 
-		bytes, err := resource.Content(b.sourcePath)
+		bytes, err := resource.Content(b.whirligig.SourcePath)
 		if err != nil {
 			return err
 		}
@@ -105,7 +110,7 @@ func (b *Builder) Build() error {
 			return err
 		}
 
-		if err := resource.Write(b.sourcePath, b.destinationPath, content); err != nil {
+		if err := resource.Write(b.whirligig.SourcePath, b.destinationPath, content); err != nil {
 			return err
 		}
 	}
@@ -113,7 +118,7 @@ func (b *Builder) Build() error {
 	// TODO: create gitignore in destinationPath so it is excluded automatically?
 	// TODO: doing this concurrently could provide a performance benefit
 	for _, file := range b.site.Files {
-		file.Copy(b.sourcePath, b.destinationPath)
+		file.Copy(b.whirligig.SourcePath, b.destinationPath)
 	}
 
 	return nil
