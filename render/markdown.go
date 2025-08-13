@@ -7,6 +7,9 @@ import (
 	"bytes"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"go.abhg.dev/goldmark/frontmatter"
 )
 
 type MarkdownEngine struct{}
@@ -16,11 +19,20 @@ func NewMarkdownEngine() *MarkdownEngine {
 }
 
 func (m *MarkdownEngine) Render(content []byte) ([]byte, error) {
-	// TODO: goldmark config
-	// TODO: ignore front matter
+	// https://github.com/yuin/goldmark?tab=readme-ov-file#extensions
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			&frontmatter.Extender{},
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(),
+	)
 
 	var out bytes.Buffer
-	if err := goldmark.Convert(content, &out); err != nil {
+	if err := md.Convert(content, &out); err != nil {
 		return nil, err
 	}
 
