@@ -11,9 +11,9 @@ import (
 	"path"
 	"time"
 
+	"github.com/hugginsio/whirligig/data"
 	"github.com/hugginsio/whirligig/internal/version"
-	"github.com/hugginsio/whirligig/pkg/data"
-	"github.com/hugginsio/whirligig/pkg/render"
+	"github.com/hugginsio/whirligig/render"
 	"github.com/hugginsio/whirligig/whirligig"
 )
 

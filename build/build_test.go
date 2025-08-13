@@ -6,7 +6,7 @@ package build_test
 import (
 	"testing"
 
-	"github.com/hugginsio/whirligig/pkg/build"
+	"github.com/hugginsio/whirligig/build"
 	"github.com/hugginsio/whirligig/whirligig"
 )
 

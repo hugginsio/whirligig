@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hugginsio/whirligig/pkg/build"
+	"github.com/hugginsio/whirligig/build"
 	"github.com/hugginsio/whirligig/whirligig"
 	"github.com/spf13/cobra"
 )
