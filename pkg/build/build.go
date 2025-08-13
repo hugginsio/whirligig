@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/hugginsio/whirligig/internal/version"
+	"github.com/hugginsio/whirligig/pkg/data"
 	"github.com/hugginsio/whirligig/pkg/render"
 	"github.com/hugginsio/whirligig/whirligig"
 )
@@ -69,7 +70,7 @@ func (b *Builder) Prepare() error {
 		return fmt.Errorf("failed to walk source directory: %w", err)
 	}
 
-	if err := b.extractData(b.site); err != nil {
+	if err := data.EnrichFiles(b.site, b.whirligig.SourcePath); err != nil {
 		return fmt.Errorf("failed to extract data: %w", err)
 	}
 

@@ -15,10 +15,10 @@ type File struct {
 	Name     string         // The name of the File, e.g. `styles.css`.
 	Basename string         // The basename of the File, e.g. `styles`.
 	Extname  string         // The extension of the File, e.g. `.css`.
-	Created  time.Time      // When the File was created.
+	Created  time.Time      // When the File was created. Can be overridden in Data.
 	Modified time.Time      // When the File was modified.
 	Path     string         // The path to the raw File, relative to the source directory.
-	Data     map[string]any // Data extracted from companion YAML files or frontmatter.
+	Data     map[string]any // Data extracted from companion files or frontmatter.
 }
 
 func (f *File) prepareDestinationFile(destinationRoot string) (*os.File, error) {

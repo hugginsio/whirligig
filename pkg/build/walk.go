@@ -15,7 +15,7 @@ import (
 
 // Walks the site source directory to build the list of Resources and Files.
 func (b *Builder) walkSourceDirectory(site *whirligig.Site) error {
-	err := filepath.Walk(b.sourcePath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(b.whirligig.SourcePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -34,7 +34,7 @@ func (b *Builder) walkSourceDirectory(site *whirligig.Site) error {
 			return nil
 		}
 
-		relativeDir, err := filepath.Rel(b.sourcePath, filepath.Dir(path))
+		relativeDir, err := filepath.Rel(b.whirligig.SourcePath, filepath.Dir(path))
 		if err != nil {
 			return err
 		}

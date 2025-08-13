@@ -21,10 +21,9 @@ func LoadYAML(path string) (map[string]any, error) {
 
 	parent := filepath.Dir(path)
 	name := filepath.Base(path[:len(path)-len(ext)])
-	path = filepath.Join(parent, "_"+name+".yaml")
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		path = filepath.Join(parent, "_"+name+".yml")
+		path = filepath.Join(parent, name+".yml")
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			return nil, nil
 		}
