@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/hugginsio/whirligig/compare/v0.0.2...v0.0.3) (2025-08-13)
+
+
+### Features
+
+* ignore frontmatter when rendering html ([#4](https://github.com/hugginsio/whirligig/issues/4)) ([e45f558](https://github.com/hugginsio/whirligig/commit/e45f5589d072ac8f34263b1124607e329de9c4c9))
+
 ## 0.0.2 (2025-08-13)
 
 
